@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pymongo
+pandas
+numpy
+scikit-learn
+prophet # For ML model

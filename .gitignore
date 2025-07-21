@@ -1,2 +1,45 @@
-# created by virtualenv automatically
-.venv/Lib
+# Python specific ignores
+.venv/                  # Virtual environment directory
+env/                    # Another common name for virtual environment
+__pycache__/            # Python compiled bytecode
+*.pyc                   # Compiled Python files
+*.pyo                   # Optimized Python compiled files
+*.pyd                   # Windows specific Python dynamic libraries
+.Python                 # Python temporary files
+
+# Node.js / Frontend specific ignores
+node_modules/           # Node.js dependency directory
+build/                  # Frontend build output (e.g., from 'npm run build')
+dist/                   # Another common name for build output
+.env                    # Environment variables file (sensitive)
+.env.*local             # Local environment variable overrides
+npm-debug.log* # NPM debug logs
+yarn-debug.log* # Yarn debug logs
+yarn-error.log* # Yarn error logs
+
+# IDE specific ignores (e.g., PyCharm, VS Code)
+.idea/                  # PyCharm project files
+.vscode/                # VS Code workspace files
+*.iml                   # IntelliJ/PyCharm module files
+
+# Operating System specific ignores
+.DS_Store               # macOS specific files
+Thumbs.db               # Windows specific files
+
+# Database specific ignores
+*.sqlite3               # SQLite database files (if used for local development)
+data/db/                # Potential directory for local database files (e.g., MongoDB data)
+
+# Machine Learning specific ignores
+ml_model/models/        # Directory for trained ML models (can be large)
+ml_model/*.pkl          # Saved Python pickle files (trained models)
+ml_model/*.h5           # Keras/TensorFlow model files
+ml_model/*.pt           # PyTorch model files
+
+# Log files
+*.log
+logs/
+
+# Output files / Generated data (adjust as needed)
+output_images/          # Directory for generated heatmap images
+temp/                   # Temporary files
