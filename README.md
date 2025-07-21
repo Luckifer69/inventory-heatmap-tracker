@@ -1,310 +1,148 @@
-Fast-Commerce Inventory Heatmap
-Project Goal (Elevator Pitch)
-Design a map-based inventory management system for a fast-commerce platform (like Blinkit or Instamart) that:
+# 🔥 Fast-Commerce Inventory Heatmap
+
+## Project Goal & Problem Solved
+
+[cite_start]**Goal:** Design a map-based inventory management system for fast-commerce platforms (like Blinkit or Instamart) [cite: 3, 5] [cite_start]that tracks and visualizes demand per zone (pincode) on a heatmap, automates replenishment based on trends, and optionally predicts future stock needs using AI/ML[cite: 7, 8, 9].
+
+**Problem:** Fast-commerce requires hyperlocal inventory management for 10-15 minute deliveries. [cite_start]Platforms struggle with real-time demand tracking, avoiding under/overstocking, and forecasting future needs[cite: 11, 12, 13, 14]. [cite_start]This project builds a system to visualize, analyze, and act on inventory movements per location[cite: 15].
+
+## ✨ Core Features
+
+* [cite_start]**Demand Heatmaps:** Visualize real-time demand intensity per pincode on an interactive map[cite: 52, 53].
+* [cite_start]**Inventory Tracking:** Monitor stock levels for each SKU at every store location[cite: 32, 33, 34, 37, 38].
+* [cite_start]**Auto-Restocking:** Trigger replenishment based on defined inventory thresholds and business rules[cite: 64, 65, 66, 67].
+* [cite_start]**AI Demand Prediction (Bonus):** Forecast future stock needs using time series models[cite: 71, 72, 73, 74].
+* [cite_start]**Admin Dashboard:** Centralized view for store locations, heatmap intensity, low-stock alerts, and restock plans[cite: 81, 82, 84, 85, 86, 87].
+
+## 🛠️ Tech Stack
+
+* [cite_start]**Frontend:** React.js, Leaflet.js [cite: 19, 20]
+* [cite_start]**Backend:** Python (FastAPI) [cite: 21, 22]
+* [cite_start]**Database:** MongoDB [cite: 23, 24]
+* [cite_start]**AI/ML:** Python (Prophet / ARIMA) [cite: 27, 28]
+* [cite_start]**Scheduler:** Celery (Python) / Node Cron (Node.js) [cite: 29, 30]
+
+## 📂 Project Structure
+
+This project is organized into modular components to facilitate collaborative development:
+
+* `FastCommerceHeatmap/` (Project Root)
+    * `.venv/` - Python virtual environment (ignored by Git)
+    * `.gitignore` - Files to ignore in Git
+    * `README.md` - Project overview (you are here!)
+    * `requirements.txt` - Python dependencies
+    * `package.json` - Frontend Node.js dependencies
+    * `data/` - Raw and mock data files
+        * `raw_inventory_data.csv` - Placeholder for initial inventory data
+        * `mock_order_data.json` - Placeholder for mock order data for demand tracking
+    * `backend/` - Python FastAPI application
+        * `__init__.py`
+        * `main.py` - Main FastAPI application entry point
+        * `api/` - API routes
+            * `__init__.py`
+            * `inventory_routes.py` - CRUD operations for inventory
+            * `demand_routes.py` - Endpoints for demand data
+        * `services/` - Business logic
+            * `__init__.py`
+            * `inventory_service.py` - Logic for inventory management
+            * `demand_service.py` - Logic for demand calculation
+        * `database/` - DB connection & models
+            * `__init__.py`
+            * `mongodb_config.py` - MongoDB connection setup
+        * `models/` - Pydantic Models for API Request/Response Validation
+            * `__init__.py`
+            * `inventory_model.py` - Data models for inventory items
+            * `demand_model.py` - Data models for demand
+        * `utils/` - Helper functions
+            * `__init__.py`
+            * `helpers.py`
+    * `frontend/` - React.js UI application
+        * `public/` - Static assets
+            * `index.html`
+        * `src/` - React source code
+            * `App.js` - Main React application component
+            * `index.js` - React entry point
+            * `components/` - Reusable UI Components
+                * `MapComponent.js` - Leaflet map integration
+                * `Dashboard.js` - Admin dashboard layout
+                * `AlertDisplay.js` - For low-stock alerts
+            * `pages/` - Page-specific Components/Views
+                * `InventoryView.js`
+                * `HeatmapView.js`
+            * `services/` - Frontend API Calls
+                * `api.js` - Functions to interact with backend APIs
+            * `styles/` - CSS Files (e.g., Tailwind CSS setup)
+                * `index.css`
+            * `utils/` - Frontend Utility Functions
+                * `helpers.js`
+        * `.env.development` - Environment variables for development
+    * `ml_model/` - Python AI/ML module
+        * `__init__.py`
+        * `train_model.py` - Script for training the demand prediction model
+        * `predict_demand.py` - Script for making predictions
+        * `models/` - Saved trained models
+        * `data_prep/` - Data preparation scripts
+            * `__init__.py`
+            * `feature_engineering.py`
+    * `scheduler/` - Automated task scheduling
+        * `__init__.py` - (If Python based)
+        * `celery_worker.py` - (If Python Celery)
+        * `cron_jobs.js` - (If Node Cron)
+        * `config.py`
+    * `tests/` - Unit and Integration Tests
+        * `backend/`
+            * `__init__.py`
+            * `test_inventory_service.py`
+        * `frontend/`
+            * `__init__.py`
+            * `test_map_component.js`
+        * `ml_model/`
+            * `__init__.py`
+            * `test_predict_demand.py`
+    * `docs/` - Project documentation & diagrams
+        * `architecture.md`
+        * `api_spec.md`
 
-Tracks and visualizes demand zone-wise (pincode-wise) on a heatmap.
 
-Automatically triggers replenishment based on demand trends.
+## 🚀 Getting Started
 
-(Bonus) Predicts next-day stock needs using AI/ML.
+1.  **Clone the Repository:**
+    ```bash
+    git clone [https://github.com/YOUR_USERNAME/FastCommerceHeatmap.git](https://github.com/YOUR_USERNAME/FastCommerceHeatmap.git)
+    cd FastCommerceHeatmap
+    ```
+2.  **Backend Setup:**
+    ```bash
+    python -m venv .venv
+    # Activate virtual environment
+    pip install -r requirements.txt
+    # Configure MongoDB connection in backend/database/mongodb_config.py
+    ```
+3.  **Frontend Setup:**
+    ```bash
+    cd frontend
+    npm install # or yarn install
+    # Configure backend API URL in frontend/.env.development
+    ```
 
-Problem Statement
-Fast-commerce platforms need hyperlocal inventory management to deliver within 10-15 minutes. They operate dark stores in specific areas and must:
+## ▶️ How to Run
 
-Track real-time demand across regions.
+* **Backend:** `uvicorn backend.main:app --reload` (from project root after venv activation)
+* **Frontend:** `npm start` (from `frontend/` directory)
 
-Avoid understocking/overstocking.
+---
 
-Forecast future demand.
+## 🤝 Team Roles & Responsibilities
 
-This project aims to build a system that helps visualize, analyze, and act on inventory movements per location, using smart UI and AI.
+[cite_start]Our team is structured to efficiently tackle this multi-faceted project[cite: 101, 102]:
 
-Core Features
-Inventory Per Location:
+* [cite_start]**Frontend Developer:** Builds the interactive heatmap and Admin Dashboard using React + Leaflet[cite: 104, 105].
+* [cite_start]**Backend Developer:** Creates APIs for inventory and demand, and manages database interactions[cite: 106, 107].
+* [cite_start]**ML Engineer:** Designs and trains the demand prediction model[cite: 108, 109].
+* [cite_start]**Integration/DevOps Specialist:** Handles scheduled triggers, deployment, and logging[cite: 110].
 
-Each store (warehouse/dark store) is mapped to a pincode.
+---
 
-Maintains a list of inventory SKUs (Stock Keeping Units) and current stock levels for each item.
+## 📄 License
 
-Example MongoDB Schema:
-
-{
-  "store_id": "DEL123",
-  "pincode": "110037",
-  "inventory": {
-    "Milk": 23,
-    "Eggs": 5,
-    "Bread": 12
-  }
-}
-
-Heatmap of Demand Per Pincode:
-
-Uses Leaflet.js to render a map of serviceable pincodes.
-
-Pincodes are color-coded based on demand intensity (High, Medium, Low).
-
-Demand is calculated using past 24-48 hours of orders per pincode per item, aggregated in real-time or hourly.
-
-Auto-Restocking Logic:
-
-Threshold-based: If inventory drops below a defined threshold, a restock is triggered.
-
-Business Rules: Allows defining specific rules (e.g., "If Eggs < 10 in pincode 110037, send restock request of 50 units").
-
-Scheduled restock checks (e.g., hourly using a cron job).
-
-Predictive AI (Bonus Feature):
-
-Utilizes time series forecasting (Prophet / ARIMA) to predict:
-
-Which items will likely be in high demand tomorrow.
-
-How much to stock today to meet tomorrow's demand.
-
-Model Inputs: Daily sales per item per pincode, Day-of-week, holidays, weather (optional).
-
-Model Output: Predicted demand auto restock quantity.
-
-Admin Dashboard:
-
-View: All stores on a map, heatmap intensity for each item or overall demand, low-stock alerts, auto-generated restock plans.
-
-Filters: Item-wise heatmap (Milk, Fruits, etc.), Time range filter (Today, Week, Custom).
-
-Example Use Case: Milk in Pincode 400092 (Andheri West) - Inventory today: 7 units, Demand trend: ~35 units/day, SHARP Alert: "Restock 40 units by 9 AM tomorrow".
-
-Suggested Tech Stack
-Component
-
-Technology
-
-Frontend UI
-
-React.js + Leaflet.js (for maps)
-
-Backend API
-
-Python (FastAPI)
-
-Database
-
-MongoDB (stores, SKUs, pincodes, inventory)
-
-AI Module
-
-Python + Prophet / ARIMA (time series forecast)
-
-Scheduler
-
-Python (Celery) or Node.js (Node Cron)
-
-Project Structure
-FastCommerceHeatmap/
-├── .venv/                       # Python virtual environment (ignored by Git)
-├── .gitignore                   # Specifies files/folders to be ignored by Git
-├── README.md                    # Project overview, setup, usage, and team roles
-├── requirements.txt             # Python backend dependencies
-├── package.json                 # Frontend Node.js dependencies
-├── data/                        # Stores raw and processed data files
-│   ├── raw_inventory_data.csv   # Placeholder for initial inventory data
-│   └── mock_order_data.json     # Placeholder for mock order data for demand tracking
-├── backend/                     # Python FastAPI backend
-│   ├── __init__.py              # Marks 'backend' as a Python package
-│   ├── main.py                  # Main FastAPI application entry point
-│   ├── api/                     # API endpoints
-│   │   ├── __init__.py
-│   │   └── inventory_routes.py  # Endpoints for inventory (GET, POST, PUT)
-│   │   └── demand_routes.py     # Endpoints for demand data
-│   ├── services/                # Business logic and data interactions
-│   │   ├── __init__.py
-│   │   ├── inventory_service.py # Logic for inventory management
-│   │   └── demand_service.py    # Logic for demand calculation
-│   ├── database/                # Database connection and schema
-│   │   ├── __init__.py
-│   │   └── mongodb_config.py    # MongoDB connection setup
-│   ├── models/                  # Pydantic models for API request/response
-│   │   ├── __init__.py
-│   │   └── inventory_model.py   # Data models for inventory items
-│   │   └── demand_model.py      # Data models for demand
-│   └── utils/                   # Utility functions (e.g., data validation)
-│       └── __init__.py
-│       └── helpers.py
-├── frontend/                    # React.js + Leaflet.js UI
-│   ├── public/                  # Static assets
-│   │   └── index.html
-│   ├── src/                     # React source code
-│   │   ├── App.js               # Main React application component
-│   │   ├── index.js             # React entry point
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── MapComponent.js  # Leaflet map integration
-│   │   │   └── Dashboard.js     # Admin dashboard layout
-│   │   │   └── AlertDisplay.js  # For low-stock alerts
-│   │   ├── pages/               # Page-specific components/views
-│   │   │   ├── InventoryView.js
-│   │   │   └── HeatmapView.js
-│   │   ├── services/            # Frontend API calls
-│   │   │   └── api.js           # Functions to interact with backend APIs
-│   │   ├── styles/              # CSS files (e.g., Tailwind CSS setup)
-│   │   │   └── index.css
-│   │   └── utils/               # Frontend utility functions
-│   │       └── helpers.js
-│   └── .env.development         # Environment variables for development
-│   └── .env.production          # Environment variables for production
-├── ml_model/                    # Python for AI/ML module (Bonus Feature)
-│   ├── __init__.py
-│   ├── train_model.py           # Script for training the demand prediction model
-│   ├── predict_demand.py        # Script for making predictions
-│   ├── models/                  # Directory to save trained models
-│   │   └── prophet_model.pkl    # Example: A saved Prophet model
-│   └── data_prep/               # Scripts for ML-specific data preparation
-│       └── __init__.py
-│       └── feature_engineering.py
-├── scheduler/                   # For auto-restock triggers (Node Cron or Celery)
-│   ├── __init__.py              # (If Python Celery)
-│   ├── celery_worker.py         # (If Python Celery)
-│   ├── cron_jobs.js             # (If Node Cron)
-│   └── config.py                # Scheduler configuration
-└── docs/                        # Project documentation, diagrams, API specs
-    └── architecture.md
-    └── api_spec.md
-
-Setup Instructions
-Follow these steps to get the project running locally.
-
-1. Clone the Repository
-git clone [https://github.com/YOUR_USERNAME/FastCommerceHeatmap.git](https://github.com/YOUR_USERNAME/FastCommerceHeatmap.git)
-cd FastCommerceHeatmap
-
-Replace YOUR_USERNAME with your actual GitHub username.
-
-2. Backend Setup (Python)
-Create a Python Virtual Environment:
-
-python -m venv .venv
-
-Activate the Virtual Environment:
-
-On Windows:
-
-.\.venv\Scripts\activate
-
-On macOS/Linux:
-
-source .venv/bin/activate
-
-Install Backend Dependencies:
-
-pip install -r requirements.txt
-
-Database (MongoDB) Setup:
-
-Ensure you have MongoDB installed and running locally, or connect to a cloud MongoDB Atlas instance.
-
-Update backend/database/mongodb_config.py with your MongoDB connection string.
-
-3. Frontend Setup (React.js)
-Navigate to the Frontend Directory:
-
-cd frontend
-
-Install Frontend Dependencies:
-
-npm install # or yarn install
-
-Configure Environment Variables:
-
-Create a .env.development file in the frontend/ directory.
-
-Add your backend API URL (e.g., REACT_APP_BACKEND_URL=http://localhost:8000).
-
-4. ML Model Setup (Python - Optional)
-Ensure your virtual environment is active (from Backend Setup).
-
-Install ML-specific dependencies (already in requirements.txt).
-
-Data Preparation: Ensure data/raw_inventory_data.csv and data/mock_order_data.json are populated with sample data for training and prediction.
-
-5. Scheduler Setup (Optional - Choose one based on your preference)
-If using Python (Celery):
-
-Ensure Celery and a message broker (like Redis or RabbitMQ) are installed and configured.
-
-Refer to scheduler/celery_worker.py for setup details.
-
-If using Node.js (Node Cron):
-
-Ensure Node.js is installed.
-
-Refer to scheduler/cron_jobs.js for setup details.
-
-How to Run the Application
-1. Start the Backend API
-Open a new terminal session.
-
-Navigate to the project root: cd FastCommerceHeatmap
-
-Activate your virtual environment:
-
-Windows: .\.venv\Scripts\activate
-
-macOS/Linux: source .venv/bin/activate
-
-Run the FastAPI application:
-
-uvicorn backend.main:app --reload
-
-The API will typically run on http://localhost:8000.
-
-2. Start the Frontend Application
-Open a separate terminal session.
-
-Navigate to the frontend directory: cd FastCommerceHeatmap/frontend
-
-Start the React development server:
-
-npm start # or yarn start
-
-The frontend will typically open in your browser at http://localhost:3000.
-
-3. Run ML Model (Training/Prediction - as needed)
-Open a new terminal session.
-
-Navigate to the project root: cd FastCommerceHeatmap
-
-Activate your virtual environment.
-
-To train the model:
-
-python ml_model/train_model.py
-
-To make predictions:
-
-python ml_model/predict_demand.py
-
-4. Start Scheduler (as needed)
-If using Celery:
-
-celery -A scheduler.celery_worker worker -l info
-
-If using Node Cron:
-
-node scheduler/cron_jobs.js
-
-Team Roles & Responsibilities
-Frontend Dev: Builds the heatmap using React + Leaflet, develops the Admin Dashboard UI.
-
-Backend Dev: Builds APIs for inventory and demand handling using FastAPI, manages MongoDB interactions.
-
-ML Engineer: Trains and deploys the demand prediction model.
-
-Integration/DevOps: Sets up scheduled triggers (cron/Celery), manages deployment, logging, and overall system integration.
-
-Contribution Guidelines
-We welcome contributions! Please follow these steps:
-
-Fork the repository.
-
-Create a new branch (git checkout -b feature/your-feature-name).
-
-Make your changes.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
