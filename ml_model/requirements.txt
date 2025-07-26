@@ -1,0 +1,9 @@
+pandas
+scikit-learn
+prophet
+pmdarima
+pymongo
+fastapi
+uvicorn
+joblib
+numpy
