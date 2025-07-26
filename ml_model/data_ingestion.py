@@ -1,4 +1,5 @@
 import pandas as pd
+import random
 # from pymongo import MongoClient # Uncomment this line if you are connecting to MongoDB
 
 def get_historical_sales_data(start_date: str, end_date: str) -> pd.DataFrame:
@@ -19,6 +20,14 @@ def get_historical_sales_data(start_date: str, end_date: str) -> pd.DataFrame:
                       It will have columns: 'date', 'pincode', 'item', 'sales_quantity'.
     """
     print(f"Fetching sales data from {start_date} to {end_date}...")
+
+    try:
+        # Validate date format
+        pd.to_datetime(start_date)
+        pd.to_datetime(end_date)
+    except ValueError as e:
+        print(f"Error: Invalid date format. Please use 'YYYY-MM-DD' format. Error: {e}")
+        return pd.DataFrame()
 
     # --- Placeholder for MongoDB Connection (Uncomment and configure for real use) ---
     # try:
@@ -49,40 +58,45 @@ def get_historical_sales_data(start_date: str, end_date: str) -> pd.DataFrame:
     # --- Simulated Data Generation (Used if MongoDB connection is not active or for testing) ---
     # This function generates synthetic sales data to allow the ML pipeline
     # to be developed and tested without a live database connection.
-    df = _simulate_sales_data(start_date, end_date)
-    # ---------------------------------------------------------------------------------
-
-    print(f"Data ingestion complete. Fetched {df.shape[0]} records.")
-    return df
+    try:
+        df = _simulate_sales_data(start_date, end_date)
+        print(f"Data ingestion complete. Fetched {df.shape[0]} records.")
+        return df
+    except Exception as e:
+        print(f"Error generating simulated data: {e}")
+        return pd.DataFrame()
 
 def _simulate_sales_data(start_date: str, end_date: str) -> pd.DataFrame:
     """
     Helper function to simulate sales data for demonstration purposes.
     This generates random daily sales for a few predefined items and pincodes.
     """
-    dates = pd.date_range(start=start_date, end=end_date, freq='D')
-    pincodes = ['110037', '400092', '400053'] # Sample pincodes
-    items = ['Milk', 'Eggs', 'Bread', 'Apples', 'Bananas'] # Sample items
+    try:
+        dates = pd.date_range(start=start_date, end=end_date, freq='D')
+        pincodes = ['110037', '400092', '400053'] # Sample pincodes
+        items = ['Milk', 'Eggs', 'Bread', 'Apples', 'Bananas'] # Sample items
 
-    data = []
-    for date in dates:
-        for pincode in pincodes:
-            for item in items:
-                import random
-                # Simulate varying sales quantities
-                sales = random.randint(10, 60)
-                if date.dayofweek >= 5: # Increase sales on weekends
-                    sales = random.randint(20, 80)
-                if item == 'Milk' and pincode == '400092': # Higher demand for Milk in a specific pincode
-                    sales += random.randint(10, 30)
-                if item == 'Eggs' and pincode == '110037': # Lower demand for Eggs in another
-                    sales = max(5, sales - random.randint(5, 20))
+        data = []
+        for date in dates:
+            for pincode in pincodes:
+                for item in items:
+                    # Simulate varying sales quantities
+                    sales = random.randint(10, 60)
+                    if date.dayofweek >= 5: # Increase sales on weekends
+                        sales = random.randint(20, 80)
+                    if item == 'Milk' and pincode == '400092': # Higher demand for Milk in a specific pincode
+                        sales += random.randint(10, 30)
+                    if item == 'Eggs' and pincode == '110037': # Lower demand for Eggs in another
+                        sales = max(5, sales - random.randint(5, 20))
 
-                data.append({'date': date, 'pincode': pincode, 'item': item, 'sales_quantity': sales})
+                    data.append({'date': date, 'pincode': pincode, 'item': item, 'sales_quantity': sales})
 
-    df = pd.DataFrame(data)
-    df['date'] = pd.to_datetime(df['date']) # Ensure 'date' is datetime object
-    return df
+        df = pd.DataFrame(data)
+        df['date'] = pd.to_datetime(df['date']) # Ensure 'date' is datetime object
+        return df
+    except Exception as e:
+        print(f"Error in _simulate_sales_data: {e}")
+        return pd.DataFrame()
 
 # This block allows you to test the script individually.
 # When you run `python data_ingestion.py` from your terminal,
@@ -95,15 +109,18 @@ if __name__ == "__main__":
     # Call the data ingestion function with the hardcoded dates
     sales_df = get_historical_sales_data(start_date_example, end_date_example)
 
-    # Print a preview of the fetched/simulated data to verify
-    print("\n--- Sample of Ingested Sales Data (from individual test) ---")
-    print(sales_df.head())
+    if not sales_df.empty:
+        # Print a preview of the fetched/simulated data to verify
+        print("\n--- Sample of Ingested Sales Data (from individual test) ---")
+        print(sales_df.head())
 
-    # Print data types to verify correct parsing
-    print("\n--- Data Types of Ingested Data (from individual test) ---")
-    print(sales_df.dtypes)
+        # Print data types to verify correct parsing
+        print("\n--- Data Types of Ingested Data (from individual test) ---")
+        print(sales_df.dtypes)
 
-    # Verify the number of unique items and pincodes
-    print(f"\nUnique Pincodes: {sales_df['pincode'].nunique()}")
-    print(f"Unique Items: {sales_df['item'].nunique()}")
-    print(f"Total records: {sales_df.shape[0]}")
+        # Verify the number of unique items and pincodes
+        print(f"\nUnique Pincodes: {sales_df['pincode'].nunique()}")
+        print(f"Unique Items: {sales_df['item'].nunique()}")
+        print(f"Total records: {sales_df.shape[0]}")
+    else:
+        print("No data was generated. Please check the error messages above.")

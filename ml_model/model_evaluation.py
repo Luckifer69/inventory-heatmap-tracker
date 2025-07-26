@@ -6,9 +6,15 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 
 # Import functions from other modules for individual testing and pipeline integration
-from data_ingestion import get_historical_sales_data
-from feature_engineering import preprocess_data
-from prediction import load_model # To load the trained models
+try:
+    from data_ingestion import get_historical_sales_data
+    from feature_engineering import preprocess_data
+    from prediction import load_model # To load the trained models
+except ImportError as e:
+    print(f"Warning: Could not import required modules: {e}")
+    # Fallback function if prediction module is not available
+    def load_model(pincode, item, model_type):
+        return None
 
 # Define the directory where trained models are saved
 MODEL_SAVE_DIR = "trained_models"
@@ -37,6 +43,13 @@ def evaluate_model_performance(pincode: str, item: str, model_type: str = 'proph
     """
     print(f"\n--- Evaluating {model_type} model for Pincode: {pincode}, Item: {item} ---")
 
+    # Validate inputs
+    if not pincode or not item:
+        return {"status": "Invalid input: pincode and item are required."}
+
+    if model_type not in ['prophet', 'arima']:
+        return {"status": f"Unsupported model type: {model_type}. Must be 'prophet' or 'arima'."}
+
     # Load the trained model
     model = load_model(pincode, item, model_type)
 
@@ -47,20 +60,26 @@ def evaluate_model_performance(pincode: str, item: str, model_type: str = 'proph
         print("No evaluation data provided. Skipping evaluation.")
         return {"status": "No historical evaluation data provided."}
 
+    # Validate evaluation data columns
+    required_columns = ['ds', 'y', 'pincode', 'item']
+    missing_columns = [col for col in required_columns if col not in evaluation_data.columns]
+    if missing_columns:
+        return {"status": f"Missing required columns in evaluation data: {missing_columns}"}
+
     # Filter the evaluation data for the specific pincode and item
-    eval_series_data = evaluation_data[
-        (evaluation_data['pincode'] == pincode) &
-        (evaluation_data['item'] == item)
-    ].sort_values('ds').copy()
-
-    if eval_series_data.empty:
-        print(f"No evaluation data found for Pincode: {pincode}, Item: {item}. Skipping.")
-        return {"status": "No specific evaluation data for this combination."}
-
-    actual_values = eval_series_data['y'].values
-    predictions = []
-
     try:
+        eval_series_data = evaluation_data[
+            (evaluation_data['pincode'] == pincode) &
+            (evaluation_data['item'] == item)
+        ].sort_values('ds').copy()
+
+        if eval_series_data.empty:
+            print(f"No evaluation data found for Pincode: {pincode}, Item: {item}. Skipping.")
+            return {"status": "No specific evaluation data for this combination."}
+
+        actual_values = eval_series_data['y'].values
+        predictions = []
+
         if model_type == 'prophet':
             # For Prophet, create a future DataFrame covering the evaluation period
             # This 'future_df' should contain the 'ds' (date) values from your evaluation data.
@@ -71,31 +90,16 @@ def evaluate_model_performance(pincode: str, item: str, model_type: str = 'proph
             predictions = forecast['yhat'].values
 
         elif model_type == 'arima':
-            # For ARIMA, evaluating on historical data is more complex than a simple predict.
-            # A common robust method is "walk-forward validation" where the model is
-            # re-trained or re-forecasted incrementally.
-            # For simplicity here, we'll try to predict over the length of the actual values.
-            # This assumes the model's `predict` method can handle this without re-fitting
-            # on the evaluation data, which might not be ideal for all ARIMA scenarios.
-            # If your ARIMA model was trained on the full historical dataset,
-            # `model.predict_in_sample()` might be an option if available and appropriate.
-
-            # Simplified prediction for evaluation:
-            # We predict `len(actual_values)` steps ahead from the end of the training data.
-            # This is not a true backtest, but a quick way to get predictions for comparison.
-            # A more robust approach would be to train on (train_data + subset_of_eval_data)
-            # and predict the next step.
+            # For ARIMA, we'll use a simplified approach for evaluation
+            # In a production system, you might want to implement walk-forward validation
             try:
-                # Attempt to predict directly over the length of the actual values
+                # Try to predict the same number of periods as the evaluation data
                 predictions = model.predict(n_periods=len(actual_values))
             except Exception as arima_pred_e:
                 print(f"Warning: ARIMA direct prediction failed during evaluation ({arima_pred_e}). "
                       "This might indicate the model needs a different evaluation strategy (e.g., walk-forward). "
                       "Falling back to zero predictions.")
                 predictions = np.zeros_like(actual_values) # Fallback
-
-        else:
-            return {"status": f"Unsupported model type: {model_type}. Must be 'prophet' or 'arima'."}
 
     except Exception as e:
         print(f"Error during prediction for evaluation of {pincode}, {item} ({model_type}): {e}")
@@ -111,24 +115,28 @@ def evaluate_model_performance(pincode: str, item: str, model_type: str = 'proph
     predictions = predictions[:min_len]
 
     # Calculate evaluation metrics
-    mae = mean_absolute_error(actual_values, predictions)
-    rmse = np.sqrt(mean_squared_error(actual_values, predictions))
+    try:
+        mae = mean_absolute_error(actual_values, predictions)
+        rmse = np.sqrt(mean_squared_error(actual_values, predictions))
 
-    # MAPE (Mean Absolute Percentage Error): Handle division by zero
-    # Add a small epsilon to avoid division by zero for actual_values that are 0
-    mape = np.mean(np.abs((actual_values - predictions) / (actual_values + 1e-8))) * 100
-    # If all actual values are zero, MAPE becomes undefined or infinite.
-    if np.all(actual_values == 0):
-        mape = float('inf') # Or handle as a specific case
+        # MAPE (Mean Absolute Percentage Error): Handle division by zero
+        # Add a small epsilon to avoid division by zero for actual_values that are 0
+        mape = np.mean(np.abs((actual_values - predictions) / (actual_values + 1e-8))) * 100
+        # If all actual values are zero, MAPE becomes undefined or infinite.
+        if np.all(actual_values == 0):
+            mape = float('inf') # Or handle as a specific case
 
-    metrics = {
-        "MAE": round(mae, 2),
-        "RMSE": round(rmse, 2),
-        "MAPE": round(mape, 2),
-        "status": "Evaluation complete"
-    }
-    print(f"Evaluation metrics for {pincode}, {item} ({model_type}): {metrics}")
-    return metrics
+        metrics = {
+            "MAE": round(mae, 2),
+            "RMSE": round(rmse, 2),
+            "MAPE": round(mape, 2),
+            "status": "Evaluation complete"
+        }
+        print(f"Evaluation metrics for {pincode}, {item} ({model_type}): {metrics}")
+        return metrics
+    except Exception as e:
+        print(f"Error calculating metrics: {e}")
+        return {"status": f"Error calculating evaluation metrics: {e}"}
 
 # This block allows you to test the script individually.
 # When you run `python model_evaluation.py` from your terminal,
@@ -139,57 +147,72 @@ if __name__ == "__main__":
     # Ensure you have run `model_training.py` first to train and save models.
     # Otherwise, `load_model` will fail.
 
-    # --- Hardcoded Inputs for Individual Testing ---
-    # 1. Get a larger range of raw data that includes both training and evaluation periods
-    print("Step 1: Ingesting raw data for a longer period (e.g., 4 months)...")
-    full_raw_sales_df = get_historical_sales_data("2024-01-01", "2024-04-30")
+    try:
+        # --- Hardcoded Inputs for Individual Testing ---
+        # 1. Get a larger range of raw data that includes both training and evaluation periods
+        print("Step 1: Ingesting raw data for a longer period (e.g., 4 months)...")
+        full_raw_sales_df = get_historical_sales_data("2024-01-01", "2024-04-30")
 
-    # 2. Preprocess the full raw data
-    print("\nStep 2: Preprocessing raw data...")
-    preprocessed_full_sales_df = preprocess_data(full_raw_sales_df)
-
-    if preprocessed_full_sales_df.empty:
-        print("Preprocessed data is empty. Cannot proceed with evaluation.")
-    else:
-        # Define the evaluation period (e.g., the last month of data)
-        # This assumes models were trained on data *before* this period.
-        evaluation_start_date = pd.to_datetime("2024-04-01")
-        evaluation_data_subset = preprocessed_full_sales_df[
-            preprocessed_full_sales_df['ds'] >= evaluation_start_date
-        ].copy()
-
-        if evaluation_data_subset.empty:
-            print(f"No evaluation data found after {evaluation_start_date}. Please adjust date ranges.")
+        if full_raw_sales_df.empty:
+            print("No raw data available. Cannot proceed with evaluation.")
         else:
-            print(f"\nStep 3: Preparing evaluation data from {evaluation_start_date} to {evaluation_data_subset['ds'].max().strftime('%Y-%m-%d')}.")
-            print(f"Evaluation data shape: {evaluation_data_subset.shape}")
+            # 2. Preprocess the full raw data
+            print("\nStep 2: Preprocessing raw data...")
+            preprocessed_full_sales_df = preprocess_data(full_raw_sales_df)
 
-            # Select a specific pincode and item for evaluation
-            test_pincode = '110037'
-            test_item = 'Milk'
+            if preprocessed_full_sales_df.empty:
+                print("Preprocessed data is empty. Cannot proceed with evaluation.")
+            else:
+                # Define the evaluation period (e.g., the last month of data)
+                # This assumes models were trained on data *before* this period.
+                evaluation_start_date = pd.to_datetime("2024-04-01")
+                evaluation_data_subset = preprocessed_full_sales_df[
+                    preprocessed_full_sales_df['ds'] >= evaluation_start_date
+                ].copy()
 
-            # Test Case 1: Evaluate Prophet model
-            print(f"\n--- Test Case 1: Evaluating Prophet for {test_pincode}, {test_item} ---")
-            prophet_metrics = evaluate_model_performance(
-                test_pincode, test_item, model_type='prophet',
-                evaluation_data=evaluation_data_subset
-            )
-            print(f"Prophet Evaluation Metrics: {prophet_metrics}")
+                if evaluation_data_subset.empty:
+                    print(f"No evaluation data found after {evaluation_start_date}. Please adjust date ranges.")
+                else:
+                    print(f"\nStep 3: Preparing evaluation data from {evaluation_start_date} to {evaluation_data_subset['ds'].max().strftime('%Y-%m-%d')}.")
+                    print(f"Evaluation data shape: {evaluation_data_subset.shape}")
 
-            # Test Case 2: Evaluate ARIMA model
-            print(f"\n--- Test Case 2: Evaluating ARIMA for {test_pincode}, {test_item} ---")
-            arima_metrics = evaluate_model_performance(
-                test_pincode, test_item, model_type='arima',
-                evaluation_data=evaluation_data_subset
-            )
-            print(f"ARIMA Evaluation Metrics: {arima_metrics}")
+                    # Select a specific pincode and item for evaluation
+                    test_pincode = '110037'
+                    test_item = 'Milk'
 
-            # Test Case 3: Evaluate for a non-existent model (should return error status)
-            print(f"\n--- Test Case 3: Evaluating for a non-existent model ---")
-            non_existent_metrics = evaluate_model_performance(
-                '999999', 'FakeItem', model_type='prophet',
-                evaluation_data=evaluation_data_subset
-            )
-            print(f"Non-existent Model Evaluation Status: {non_existent_metrics}")
+                    # Test Case 1: Evaluate Prophet model
+                    print(f"\n--- Test Case 1: Evaluating Prophet for {test_pincode}, {test_item} ---")
+                    prophet_metrics = evaluate_model_performance(
+                        test_pincode, test_item, model_type='prophet',
+                        evaluation_data=evaluation_data_subset
+                    )
+                    print(f"Prophet Evaluation Metrics: {prophet_metrics}")
+
+                    # Test Case 2: Evaluate ARIMA model
+                    print(f"\n--- Test Case 2: Evaluating ARIMA for {test_pincode}, {test_item} ---")
+                    arima_metrics = evaluate_model_performance(
+                        test_pincode, test_item, model_type='arima',
+                        evaluation_data=evaluation_data_subset
+                    )
+                    print(f"ARIMA Evaluation Metrics: {arima_metrics}")
+
+                    # Test Case 3: Evaluate for a non-existent model (should return error status)
+                    print(f"\n--- Test Case 3: Evaluating for a non-existent model ---")
+                    non_existent_metrics = evaluate_model_performance(
+                        '999999', 'FakeItem', model_type='prophet',
+                        evaluation_data=evaluation_data_subset
+                    )
+                    print(f"Non-existent Model Evaluation Status: {non_existent_metrics}")
+
+                    # Test Case 4: Test with invalid inputs
+                    print(f"\n--- Test Case 4: Testing with invalid inputs ---")
+                    invalid_metrics = evaluate_model_performance(
+                        "", "", model_type='prophet',
+                        evaluation_data=evaluation_data_subset
+                    )
+                    print(f"Invalid Inputs Evaluation Status: {invalid_metrics}")
+
+    except Exception as e:
+        print(f"Error during individual testing: {e}")
 
     print("\nIndividual testing of model_evaluation.py complete.")

@@ -1,9 +1,20 @@
-pandas
-scikit-learn
-prophet
-pmdarima
-pymongo
-fastapi
-uvicorn
-joblib
-numpy
+# Fixed requirements with compatible versions
+# These versions avoid numpy binary compatibility issues
+
+# Core ML packages
+numpy==1.24.3
+pandas>=1.5.0
+scikit-learn>=1.1.0
+prophet>=1.1.0
+joblib>=1.2.0
+
+# API packages
+fastapi>=0.95.0
+uvicorn>=0.20.0
+httpx
+python-multipart>=0.0.6
+pydantic>=1.10.0
+requests>=2.28.0
+
+# Note: pmdarima is excluded due to numpy compatibility issues
+# Use Prophet models instead for time series forecasting
